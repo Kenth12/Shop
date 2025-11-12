@@ -104,7 +104,7 @@ def create_app() -> Flask:
             return redirect(url_for("sales_list"))
         return redirect(url_for("login"))
 
-    @app.route("/login", methods=["GET", "POST"])
+    @app.route("/login/", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
             username = request.form.get("username", "").strip()
@@ -123,20 +123,20 @@ def create_app() -> Flask:
             return redirect(url_for("sales_list"))
         return render_template("login.html")
 
-    @app.route("/logout")
+    @app.route("/logout/")
     def logout():
         session.clear()
         flash("Has cerrado sesión.", "info")
         return redirect(url_for("login"))
 
-    @app.route("/ventas")
+    @app.route("/ventas/")
     def sales_list():
         if not require_login():
             return redirect(url_for("login"))
         sales = get_sales()
         return render_template("sales_list.html", sales=sales)
 
-    @app.route("/ventas/nueva", methods=["GET", "POST"])
+    @app.route("/ventas/nueva/", methods=["GET", "POST"])
     def sales_create():
         if not require_login():
             return redirect(url_for("login"))
@@ -194,7 +194,7 @@ def create_app() -> Flask:
 
         return render_template("sales_form.html", action="Crear", sale=None)
 
-    @app.route("/ventas/<sale_id>/editar", methods=["GET", "POST"])
+    @app.route("/ventas/<sale_id>/editar/", methods=["GET", "POST"])
     def sales_edit(sale_id: str):
         if not require_login():
             return redirect(url_for("login"))
@@ -256,7 +256,7 @@ def create_app() -> Flask:
 
         return render_template("sales_form.html", action="Editar", sale=sale)
 
-    @app.route("/ventas/<sale_id>/eliminar", methods=["POST"])
+    @app.route("/ventas/<sale_id>/eliminar/", methods=["POST"])
     def sales_delete(sale_id: str):
         if not require_login():
             return redirect(url_for("login"))

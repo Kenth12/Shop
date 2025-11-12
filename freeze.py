@@ -1,33 +1,53 @@
 from pathlib import Path
 import os
 import json
-import shutil
 
 from flask_frozen import Freezer
 
 from app import create_app
 
+# Set FREEZE before creating the app so it's available during initialization
+os.environ["FREEZE"] = "1"
+
 app = create_app()
+
 # Configure freezer
 app.config['FREEZER_DESTINATION'] = 'build'
 app.config['FREEZER_RELATIVE_URLS'] = True
-# Remove trailing slashes to avoid directory/file conflicts
-app.config['FREEZER_REMOVE_EXTRA_FILES'] = False
+app.config['FREEZER_IGNORE_MIMETYPE_WARNINGS'] = True
 
 freezer = Freezer(app)
 
-# Override the default URL handling to always create index.html in directories
+
+# Register custom URL generators that return URLs with trailing slashes
 @freezer.register_generator
-def error_handlers():
-    """Prevent freezer from trying to freeze error handlers."""
-    return []
+def index():
+    yield '/'
+
+
+@freezer.register_generator
+def login():
+    yield '/login/'
+
+
+@freezer.register_generator
+def logout():
+    yield '/logout/'
+
+
+@freezer.register_generator
+def sales_list():
+    yield '/ventas/'
+
+
+@freezer.register_generator
+def sales_create():
+    yield '/ventas/nueva/'
 
 
 @freezer.register_generator
 def sales_edit():
-    """Generate arguments for the `sales_edit` endpoint so pages like
-    `/ventas/<sale_id>/editar` are frozen.
-    """
+    """Generate sale edit pages with trailing slashes."""
     data_file = Path(__file__).resolve().parent / "data" / "sales.json"
     if not data_file.exists():
         return
@@ -37,12 +57,9 @@ def sales_edit():
     for s in sales:
         sale_id = s.get("id")
         if sale_id:
-            yield {"sale_id": sale_id}
+            # Return dict with sale_id for url_for, but we need to ensure trailing slash
+            yield {'sale_id': sale_id}
 
 
 if __name__ == "__main__":
-    # Ensure FREEZE is set so the app bypasses login and renders as if an
-    # authenticated user is present during the build step.
-    os.environ["FREEZE"] = "1"
-    
     freezer.freeze()
