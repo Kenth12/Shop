@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} venta{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h2>{{ action }} venta</h2>
+  <form method="post">
+    <label for="product">Producto</label>
+    <input
+      type="text"
+      id="product"
+      name="product"
+      value="{{ sale.product if sale else '' }}"
+      required
+    />
+
+    <label for="customer">Cliente</label>
+    <input
+      type="text"
+      id="customer"
+      name="customer"
+      value="{{ sale.customer if sale else '' }}"
+    />
+
+    <label for="quantity">Cantidad</label>
+    <input
+      type="number"
+      min="1"
+      id="quantity"
+      name="quantity"
+      value="{{ sale.quantity if sale else 1 }}"
+      required
+    />
+
+    <label for="price">Precio</label>
+    <input
+      type="number"
+      step="0.01"
+      min="0"
+      id="price"
+      name="price"
+      value="{{ sale.price if sale else '' }}"
+      required
+    />
+
+    <div class="actions">
+      <a class="button secondary" href="{{ url_for('sales_list') }}">Cancelar</a>
+      <button class="button" type="submit">{{ action }}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+

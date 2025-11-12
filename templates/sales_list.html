@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Ventas{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="header-row">
+    <h2>Ventas registradas</h2>
+    <a class="button" href="{{ url_for('sales_create') }}">Nueva venta</a>
+  </div>
+
+  {% if sales %}
+  <table>
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cliente</th>
+        <th>Cantidad</th>
+        <th>Precio</th>
+        <th>Vendedor</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr>
+        <td>{{ sale.product }}</td>
+        <td>{{ sale.customer or "N/A" }}</td>
+        <td>{{ sale.quantity }}</td>
+        <td>${{ "%.2f"|format(sale.price) }}</td>
+        <td>{{ sale.seller or "N/A" }}</td>
+        <td>
+          <a class="button small" href="{{ url_for('sales_edit', sale_id=sale.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('sales_delete', sale_id=sale.id) }}" onsubmit="return confirm('¿Eliminar esta venta?');">
+            <button class="button danger small" type="submit">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No hay ventas registradas.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
