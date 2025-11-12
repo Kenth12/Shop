@@ -1,13 +1,22 @@
 from pathlib import Path
 import os
 import json
+import sys
+
+# Add current directory to path to ensure app module is found
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from app import create_app
 
 if __name__ == "__main__":
+    print(f"Python version: {sys.version}")
+    print(f"Working directory: {os.getcwd()}")
+    print(f"Script location: {Path(__file__).resolve()}")
+    
     # Create build directory
     build_dir = Path('build')
     build_dir.mkdir(exist_ok=True)
+    print(f"Build directory: {build_dir.absolute()}")
     
     # Copy static files
     import shutil
@@ -17,8 +26,11 @@ if __name__ == "__main__":
         if static_dst.exists():
             shutil.rmtree(static_dst)
         shutil.copytree(static_src, static_dst)
+        print(f"✓ Copied static files")
+    else:
+        print(f"⚠ No static directory found at {static_src.absolute()}")
     
-    print("=== Generating LOGIN page (without FREEZE) ===")
+    print("\n=== Generating LOGIN page (without FREEZE) ===")
     # Generate login page WITHOUT FREEZE (so it shows actual login form)
     app_no_freeze = create_app()
     with app_no_freeze.test_client() as client:
@@ -37,6 +49,7 @@ if __name__ == "__main__":
             print(f"✓ Generated: login/index.html")
         else:
             print(f"✗ Failed to generate login (status {response.status_code})")
+            sys.exit(1)
     
     print("\n=== Generating VENTAS pages (with FREEZE) ===")
     # Generate ventas pages WITH FREEZE (simulate logged in)
@@ -74,5 +87,11 @@ if __name__ == "__main__":
                 print(f"✓ Generated: {filepath}")
             else:
                 print(f"✗ Failed: {url} (status {response.status_code})")
+    
+    # List all generated files
+    print(f"\n=== Files in build directory ===")
+    for item in sorted(build_dir.rglob('*')):
+        if item.is_file():
+            print(f"  {item.relative_to(build_dir)}")
     
     print(f"\n✅ Build complete! Files in: {build_dir.absolute()}")
