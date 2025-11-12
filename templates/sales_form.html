@@ -4,51 +4,119 @@
 
 {% block content %}
 <section class="card">
-  <h2>{{ action }} venta</h2>
-  <form method="post">
-    <label for="product">Producto</label>
-    <input
-      type="text"
-      id="product"
-      name="product"
-      value="{{ sale.product if sale else '' }}"
-      required
-    />
+  <div class="header-row">
+    <h2>
+      {% if action == "Crear" %}
+      ✨ Nueva Venta
+      {% else %}
+      ✏️ Editar Venta
+      {% endif %}
+    </h2>
+  </div>
+  
+  <div class="alert warning">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+    </svg>
+    <strong>Sitio de demostración:</strong> Este es un sitio estático. Los formularios no guardan cambios reales.
+  </div>
+  
+  <form method="post" onsubmit="return handleFormSubmit(event);">
+    <div>
+      <label for="product">
+        <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+        </svg>
+        Producto
+      </label>
+      <input
+        type="text"
+        id="product"
+        name="product"
+        value="{{ sale.product if sale else '' }}"
+        placeholder="Ej: Camiseta Polo"
+        required
+      />
+    </div>
 
-    <label for="customer">Cliente</label>
-    <input
-      type="text"
-      id="customer"
-      name="customer"
-      value="{{ sale.customer if sale else '' }}"
-    />
+    <div>
+      <label for="customer">
+        <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+        </svg>
+        Cliente
+      </label>
+      <input
+        type="text"
+        id="customer"
+        name="customer"
+        value="{{ sale.customer if sale else '' }}"
+        placeholder="Ej: Juan Pérez"
+      />
+    </div>
 
-    <label for="quantity">Cantidad</label>
-    <input
-      type="number"
-      min="1"
-      id="quantity"
-      name="quantity"
-      value="{{ sale.quantity if sale else 1 }}"
-      required
-    />
+    <div>
+      <label for="quantity">
+        <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+        </svg>
+        Cantidad
+      </label>
+      <input
+        type="number"
+        min="1"
+        id="quantity"
+        name="quantity"
+        value="{{ sale.quantity if sale else 1 }}"
+        placeholder="1"
+        required
+      />
+    </div>
 
-    <label for="price">Precio</label>
-    <input
-      type="number"
-      step="0.01"
-      min="0"
-      id="price"
-      name="price"
-      value="{{ sale.price if sale else '' }}"
-      required
-    />
+    <div>
+      <label for="price">
+        <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+        </svg>
+        Precio (USD)
+      </label>
+      <input
+        type="number"
+        step="0.01"
+        min="0"
+        id="price"
+        name="price"
+        value="{{ sale.price if sale else '' }}"
+        placeholder="0.00"
+        required
+      />
+    </div>
 
-    <div class="actions">
-      <a class="button secondary" href="{{ url_for('sales_list') }}">Cancelar</a>
-      <button class="button" type="submit">{{ action }}</button>
+    <div class="actions" style="margin-top: 1.5rem;">
+      <a class="button secondary" href="{{ url_for('sales_list') }}">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        Cancelar
+      </a>
+      <button class="button success" type="submit">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ action }}
+      </button>
     </div>
   </form>
+  
+  <script>
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      alert('Este es un sitio estático de demostración. Los cambios no se guardan.');
+      window.location.href = '/ventas/';
+      return false;
+    }
+  </script>
 </section>
 {% endblock %}
 

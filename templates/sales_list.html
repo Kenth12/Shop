@@ -5,42 +5,101 @@
 {% block content %}
 <section class="card">
   <div class="header-row">
-    <h2>Ventas registradas</h2>
-    <a class="button" href="{{ url_for('sales_create') }}">Nueva venta</a>
+    <h2>📊 Ventas Registradas</h2>
+    <a class="button success" href="{{ url_for('sales_create') }}">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nueva Venta
+    </a>
+  </div>
+  
+  <div class="alert info">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+    </svg>
+    <strong>Sitio estático:</strong> Esta es una demostración. Los datos mostrados son estáticos y no se pueden modificar.
   </div>
 
   {% if sales %}
-  <table>
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Cliente</th>
-        <th>Cantidad</th>
-        <th>Precio</th>
-        <th>Vendedor</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for sale in sales %}
-      <tr>
-        <td>{{ sale.product }}</td>
-        <td>{{ sale.customer or "N/A" }}</td>
-        <td>{{ sale.quantity }}</td>
-        <td>${{ "%.2f"|format(sale.price) }}</td>
-        <td>{{ sale.seller or "N/A" }}</td>
-        <td>
-          <a class="button small" href="{{ url_for('sales_edit', sale_id=sale.id) }}">Editar</a>
-          <form method="post" action="{{ url_for('sales_delete', sale_id=sale.id) }}" onsubmit="return confirm('¿Eliminar esta venta?');">
-            <button class="button danger small" type="submit">Eliminar</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>
+            <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+            </svg>
+            Producto
+          </th>
+          <th>
+            <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+            Cliente
+          </th>
+          <th>
+            <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+            </svg>
+            Cantidad
+          </th>
+          <th>
+            <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+            </svg>
+            Precio
+          </th>
+          <th>
+            <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+            Vendedor
+          </th>
+          <th style="text-align: center;">
+            <svg style="display: inline; vertical-align: middle; margin-right: 4px;" width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
+            </svg>
+            Acciones
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sale in sales %}
+        <tr>
+          <td><strong>{{ sale.product }}</strong></td>
+          <td>{{ sale.customer or "—" }}</td>
+          <td><span class="badge primary">{{ sale.quantity }} und.</span></td>
+          <td><strong style="color: #059669;">${{ "%.2f"|format(sale.price) }}</strong></td>
+          <td>{{ sale.seller or "—" }}</td>
+          <td class="actions" style="justify-content: center;">
+            <a class="button small" href="{{ url_for('sales_edit', sale_id=sale.id) }}" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Editar
+            </a>
+            <button class="button danger small" type="button" onclick="alert('Este es un sitio estático. No se pueden eliminar registros.');">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Eliminar
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% else %}
-  <p>No hay ventas registradas.</p>
+  <div style="text-align: center; padding: 3rem; color: #6b7280;">
+    <svg style="margin: 0 auto 1rem; opacity: 0.5;" width="64" height="64" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clip-rule="evenodd"/>
+    </svg>
+    <p style="font-size: 1.125rem; font-weight: 500;">No hay ventas registradas</p>
+    <p style="margin-top: 0.5rem;">Comienza agregando tu primera venta</p>
+  </div>
   {% endif %}
 </section>
 {% endblock %}
