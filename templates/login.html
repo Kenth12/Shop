@@ -5,7 +5,7 @@
 {% block content %}
 <section class="card">
   <h2>Iniciar sesión</h2>
-  <form method="post" onsubmit="return handleLogin(event);">
+  <form method="post">
     <label for="username">Usuario</label>
     <input type="text" id="username" name="username" required />
 
@@ -14,16 +14,6 @@
 
     <button type="submit">Entrar</button>
   </form>
-  
-  <script>
-    function handleLogin(event) {
-      // For static site: redirect to ventas page
-      // In production with backend, this form would POST to server
-      event.preventDefault();
-      window.location.href = '/ventas/';
-      return false;
-    }
-  </script>
 </section>
 {% endblock %}
 
