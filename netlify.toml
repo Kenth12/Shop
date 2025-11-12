@@ -1,0 +1,12 @@
+[build]
+  # Install dependencies and run the freeze script to generate the static site
+  command = "pip install -r requirements.txt && python freeze.py"
+  publish = "build"
+
+[build.environment]
+  # Set FREEZE so the app renders authenticated pages during the build
+  FREEZE = "1"
+
+[context.production.environment]
+  # Optional: override SECRET_KEY in Netlify UI for safety
+  SECRET_KEY = "change-this-secret-key"

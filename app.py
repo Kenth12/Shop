@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, List
 from uuid import uuid4
@@ -57,12 +58,20 @@ def find_user(username: str) -> Dict[str, Any] | None:
 
 
 def require_login() -> bool:
+    # During static freeze (NETLIFY build) we may want to bypass login so
+    # pages that require authentication can be rendered to static HTML.
+    # Set environment variable FREEZE=1 when running the freeze script or
+    # in Netlify build environment to enable this behavior.
+    if os.environ.get("FREEZE") == "1":
+        return True
     return bool(session.get("username"))
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "change-this-secret-key"
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-this-secret-key")
+    # Expose freeze flag to the app config
+    app.config["FREEZE"] = os.environ.get("FREEZE") == "1"
 
     @app.before_request
     def ensure_data_files() -> None:
@@ -81,6 +90,13 @@ def create_app() -> Flask:
             )
         if not SALES_FILE.exists():
             save_json(SALES_FILE, {"sales": []})
+        # If freezing, ensure there's a session so templates that expect a
+        # logged-in user render correctly.
+        if app.config.get("FREEZE"):
+            # We'll set a display name and username in session for templates
+            # during the freeze build. This only runs when FREEZE=1.
+            session.setdefault("username", "admin")
+            session.setdefault("display_name", "Static")
 
     @app.route("/")
     def index():
