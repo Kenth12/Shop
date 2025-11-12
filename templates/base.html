@@ -13,9 +13,9 @@
         {% if session.get('username') %}
         <span>Sesión: {{ session.get('display_name') }}</span>
         <a href="{{ url_for('sales_list') }}">Ventas</a>
-        <form class="inline" method="get" action="{{ url_for('logout') }}">
-          <button type="submit">Salir</button>
-        </form>
+        <a href="/">
+          <button type="button">Salir</button>
+        </a>
         {% endif %}
       </nav>
     </header>
