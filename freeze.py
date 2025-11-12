@@ -8,10 +8,19 @@ from flask_frozen import Freezer
 from app import create_app
 
 app = create_app()
-# Configure freezer to handle URLs without extensions properly
+# Configure freezer
 app.config['FREEZER_DESTINATION'] = 'build'
 app.config['FREEZER_RELATIVE_URLS'] = True
+# Remove trailing slashes to avoid directory/file conflicts
+app.config['FREEZER_REMOVE_EXTRA_FILES'] = False
+
 freezer = Freezer(app)
+
+# Override the default URL handling to always create index.html in directories
+@freezer.register_generator
+def error_handlers():
+    """Prevent freezer from trying to freeze error handlers."""
+    return []
 
 
 @freezer.register_generator
@@ -35,10 +44,5 @@ if __name__ == "__main__":
     # Ensure FREEZE is set so the app bypasses login and renders as if an
     # authenticated user is present during the build step.
     os.environ["FREEZE"] = "1"
-    
-    # Clean the build directory before freezing to avoid conflicts
-    build_dir = Path(__file__).resolve().parent / "build"
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
     
     freezer.freeze()

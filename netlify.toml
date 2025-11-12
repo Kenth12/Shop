@@ -1,6 +1,6 @@
 [build]
   # Install dependencies and run the freeze script to generate the static site
-  command = "pip install -r requirements.txt && python freeze.py"
+  command = "rm -rf build && pip install -r requirements.txt && python freeze.py"
   publish = "build"
 
 [build.environment]
