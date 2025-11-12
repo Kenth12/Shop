@@ -18,26 +18,3 @@
     }
   ]
 }
-{
-  "sales": [
-    {
-      "id": "a1b2c3d4-e5f6-7890-abcd-000000000001",
-      "product": "Camiseta",
-      "quantity": 2,
-      "price": 19.99,
-      "customer": "Juan Perez",
-      "seller": "Administrador"
-    },
-    {
-      "id": "a1b2c3d4-e5f6-7890-abcd-000000000002",
-      "product": "Pantalones",
-      "quantity": 1,
-      "price": 39.99,
-      "customer": "Ana Gomez",
-      "seller": "Administrador"
-    }
-  ]
-}
-{
-  "sales": []
-}
