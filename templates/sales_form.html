@@ -6,14 +6,13 @@
 <section class="card">
   <h2>{{ action }} venta</h2>
   <form method="post" class="form-grid">
-    <label for="product">Producto</label>
-    <input
-      type="text"
-      id="product"
-      name="product"
-      value="{{ sale.product if sale else '' }}"
-      required
-    />
+    <label for="product_id">Producto</label>
+    <select id="product_id" name="product_id">
+      <option value="">— Seleccione producto —</option>
+      {% for p in products %}
+      <option value="{{ p.id }}" data-price="{{ p.price }}" {% if sale and sale.product_id and sale.product_id == p.id %}selected{% elif sale and not sale.product_id and sale.product == p.name %}selected{% endif %}>{{ p.name }} {% if p.sku %}({{ p.sku }}){% endif %} - {{ p.stock }} disponibles</option>
+      {% endfor %}
+    </select>
 
     <fieldset class="full">
       <legend>Información del cliente</legend>
@@ -70,5 +69,20 @@
     </div>
   </form>
 </section>
+<script>
+  // Autofill price when selecting a product
+  (function(){
+    const sel = document.getElementById('product_id');
+    const priceInput = document.getElementById('price');
+    if(!sel || !priceInput) return;
+    sel.addEventListener('change', function(){
+      const opt = sel.options[sel.selectedIndex];
+      const p = opt ? opt.getAttribute('data-price') : '';
+      if(p !== null && p !== ''){
+        priceInput.value = parseFloat(p).toFixed(2);
+      }
+    });
+  })();
+</script>
 {% endblock %}
 

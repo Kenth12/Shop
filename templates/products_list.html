@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="header-row">
+    <h2>Inventario</h2>
+    <div>
+      <a class="button primary" href="{{ url_for('product_create') }}">Nuevo producto</a>
+      <a class="button ghost" href="{{ url_for('sales_list') }}">Volver a ventas</a>
+    </div>
+  </div>
+
+  {% if products %}
+  <div class="table-responsive">
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>SKU</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td>{{ p.name }}</td>
+        <td>{{ p.sku or '-' }}</td>
+        <td>${{ "%.2f"|format(p.price) }}</td>
+        <td>{{ p.stock }}</td>
+        <td>
+          <a class="button small" href="{{ url_for('product_edit', product_id=p.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('product_delete', product_id=p.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar este producto?');">
+            <button class="button danger small" type="submit">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p>No hay productos en el inventario.</p>
+  {% endif %}
+</section>
+{% endblock %}

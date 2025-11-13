@@ -27,6 +27,19 @@
         "phone": "123123"
       },
       "seller": "Administrador"
+    },
+    {
+      "id": "5e3ce0da-ff37-4d7e-835f-49b9a1845d76",
+      "product": "Silla",
+      "product_id": "0daae9c1-43cc-4879-be63-7c8e25e68504",
+      "quantity": 1,
+      "price": 10.0,
+      "customer": {
+        "name": "qwe",
+        "email": "javier@132.com",
+        "phone": "3234"
+      },
+      "seller": "Administrador"
     }
   ]
 }

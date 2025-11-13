@@ -15,6 +15,7 @@
             {% if session.get('username') %}
             <span>Sesión: {{ session.get('display_name') }}</span>
             <a class="button ghost" href="{{ url_for('sales_list') }}">Ventas</a>
+            <a class="button ghost" href="{{ url_for('products_list') }}">Inventario</a>
             <form class="inline" method="get" action="{{ url_for('logout') }}">
               <button class="button small" type="submit">Salir</button>
             </form>

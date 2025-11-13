@@ -1,0 +1,18 @@
+{
+  "products": [
+    {
+      "id": "0daae9c1-43cc-4879-be63-7c8e25e68504",
+      "name": "Silla",
+      "sku": "asdasdasd",
+      "price": 10.0,
+      "stock": 4
+    },
+    {
+      "id": "a82ba2ca-1db5-438e-860a-7e9151415b64",
+      "name": "Mesa",
+      "sku": "7895745",
+      "price": 30.0,
+      "stock": 20
+    }
+  ]
+}

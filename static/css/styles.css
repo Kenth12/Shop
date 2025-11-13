@@ -76,6 +76,17 @@ legend{ font-weight:700; padding:0 0.5rem }
 .button.secondary{ background:#eef3fb; color:var(--accent); border:1px solid rgba(37,99,235,0.08) }
 .button.danger{ background:var(--danger); color:#fff }
 .button.ghost{ background:transparent; color:var(--text); border:1px solid rgba(0,0,0,0.06) }
+
+/* Header-specific adjustments: ensure ghost buttons contrast on dark header */
+header .bar .button.ghost{
+  color: #e6eefc; /* light blue-ish */
+  border-color: rgba(230,238,252,0.12);
+  background: rgba(255,255,255,0.02);
+}
+header .bar .button.ghost:hover{
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+}
 .button.small{ padding:0.4rem 0.6rem; font-size:0.9rem }
 .button:focus{ box-shadow:0 0 0 4px rgba(37,99,235,0.12) }
 

@@ -23,6 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 USERS_FILE = DATA_DIR / "users.json"
 SALES_FILE = DATA_DIR / "sales.json"
+PRODUCTS_FILE = DATA_DIR / "products.json"
 
 
 def load_json(file_path: Path) -> Dict[str, Any]:
@@ -46,6 +47,15 @@ def get_users() -> List[Dict[str, Any]]:
 def get_sales() -> List[Dict[str, Any]]:
     data = load_json(SALES_FILE)
     return data.get("sales", [])
+
+
+def get_products() -> List[Dict[str, Any]]:
+    data = load_json(PRODUCTS_FILE)
+    return data.get("products", [])
+
+
+def persist_products(products: List[Dict[str, Any]]) -> None:
+    save_json(PRODUCTS_FILE, {"products": products})
 
 
 def persist_sales(sales: List[Dict[str, Any]]) -> None:
@@ -84,6 +94,8 @@ def create_app() -> Flask:
             )
         if not SALES_FILE.exists():
             save_json(SALES_FILE, {"sales": []})
+        if not PRODUCTS_FILE.exists():
+            save_json(PRODUCTS_FILE, {"products": []})
 
     @app.route("/")
     def index():
@@ -143,14 +155,27 @@ def create_app() -> Flask:
         if not require_login():
             return redirect(url_for("login"))
 
+        products = get_products()
+
         if request.method == "POST":
             product = request.form.get("product", "").strip()
+            # allow selecting a product from inventory
+            product_id = request.form.get("product_id", "").strip()
             quantity = request.form.get("quantity", "").strip()
             price = request.form.get("price", "").strip()
             # customer details
             customer_name = request.form.get("customer_name", "").strip()
             customer_email = request.form.get("customer_email", "").strip()
             customer_phone = request.form.get("customer_phone", "").strip()
+
+            # if product selected from inventory, override name/price BEFORE validation
+            if product_id:
+                prod = next((p for p in products if p.get("id") == product_id), None)
+                if prod:
+                    product = prod.get("name", product)
+                    # if price not provided, use product price
+                    if not price:
+                        price = str(prod.get("price", ""))
 
             errors = []
             if not product:
@@ -177,15 +202,18 @@ def create_app() -> Flask:
                     action="Crear",
                     sale={
                         "product": product,
+                        "product_id": product_id,
                         "quantity": quantity,
                         "price": price,
                         "customer": {"name": customer_name, "email": customer_email, "phone": customer_phone},
                     },
+                    products=products,
                 )
 
             new_sale = {
                 "id": str(uuid4()),
                 "product": product,
+                "product_id": product_id,
                 "quantity": quantity_value,
                 "price": price_value,
                 "customer": {"name": customer_name, "email": customer_email, "phone": customer_phone},
@@ -194,10 +222,22 @@ def create_app() -> Flask:
             sales = get_sales()
             sales.append(new_sale)
             persist_sales(sales)
+            # decrement stock if product used
+            if product_id:
+                prod = next((p for p in products if p.get("id") == product_id), None)
+                if prod and isinstance(prod.get("stock"), int):
+                    try:
+                        prod_stock = int(prod.get("stock", 0))
+                        if quantity_value > prod_stock:
+                            flash("Stock insuficiente para el producto seleccionado.", "error")
+                            return redirect(url_for("sales_create"))
+                        prod["stock"] = prod_stock - quantity_value
+                        persist_products(products)
+                    except Exception:
+                        pass
             flash("Venta creada correctamente.", "success")
             return redirect(url_for("sales_list"))
-
-        return render_template("sales_form.html", action="Crear", sale=None)
+        return render_template("sales_form.html", action="Crear", sale=None, products=products)
 
     @app.route("/ventas/<sale_id>/editar", methods=["GET", "POST"])
     def sales_edit(sale_id: str):
@@ -222,13 +262,24 @@ def create_app() -> Flask:
                 "phone": cust.get("phone", "") if isinstance(cust, dict) else "",
             }
 
+        products = get_products()
+
         if request.method == "POST":
             product = request.form.get("product", "").strip()
+            product_id = request.form.get("product_id", "").strip()
             quantity = request.form.get("quantity", "").strip()
             price = request.form.get("price", "").strip()
             customer_name = request.form.get("customer_name", "").strip()
             customer_email = request.form.get("customer_email", "").strip()
             customer_phone = request.form.get("customer_phone", "").strip()
+
+            # if product selected from inventory, override name/price BEFORE validation
+            if product_id:
+                prod = next((p for p in products if p.get("id") == product_id), None)
+                if prod:
+                    product = prod.get("name", product)
+                    if not price:
+                        price = str(prod.get("price", ""))
 
             errors = []
             if not product:
@@ -256,15 +307,18 @@ def create_app() -> Flask:
                     sale={
                         "id": sale["id"],
                         "product": product,
+                        "product_id": product_id,
                         "quantity": quantity,
                         "price": price,
                         "customer": {"name": customer_name, "email": customer_email, "phone": customer_phone},
                     },
+                    products=products,
                 )
 
             sale.update(
                 {
                     "product": product,
+                    "product_id": product_id,
                     "quantity": quantity_value,
                     "price": price_value,
                     "customer": {"name": customer_name, "email": customer_email, "phone": customer_phone},
@@ -274,7 +328,7 @@ def create_app() -> Flask:
             flash("Venta actualizada.", "success")
             return redirect(url_for("sales_list"))
 
-        return render_template("sales_form.html", action="Editar", sale=sale)
+        return render_template("sales_form.html", action="Editar", sale=sale, products=products)
 
     @app.route("/ventas/<sale_id>/eliminar", methods=["POST"])
     def sales_delete(sale_id: str):
@@ -292,7 +346,7 @@ def create_app() -> Flask:
 
     @app.route("/ventas/reporte")
     def sales_report():
-        """Genera un CSV con todas las ventas y lo devuelve como descarga."""
+        """Genera un CSV con todas las ventas y el inventario y lo devuelve como descarga."""
         if not require_login():
             return redirect(url_for("login"))
 
@@ -314,7 +368,7 @@ def create_app() -> Flask:
 
         output = io.StringIO()
         writer = csv.writer(output)
-        # Header
+        # Sales header
         writer.writerow([
             "id",
             "product",
@@ -346,12 +400,132 @@ def create_app() -> Flask:
                 ]
             )
 
+        # Separator row
+        writer.writerow([])
+
+        # Inventory section
+        products = get_products()
+        writer.writerow(["inventory_id", "name", "sku", "price", "stock"])
+        for p in products:
+            writer.writerow([
+                p.get("id", ""),
+                p.get("name", ""),
+                p.get("sku", ""),
+                p.get("price", ""),
+                p.get("stock", ""),
+            ])
+
         csv_data = output.getvalue()
         output.close()
 
         resp = Response(csv_data, mimetype="text/csv")
-        resp.headers["Content-Disposition"] = "attachment; filename=reporte_ventas.csv"
+        resp.headers["Content-Disposition"] = "attachment; filename=reporte_ventas_e_inventario.csv"
         return resp
+
+    # --- Inventory (products) CRUD ---
+    @app.route("/inventario")
+    def products_list():
+        if not require_login():
+            return redirect(url_for("login"))
+        products = get_products()
+        return render_template("products_list.html", products=products)
+
+    @app.route("/inventario/nuevo", methods=["GET", "POST"])
+    def product_create():
+        if not require_login():
+            return redirect(url_for("login"))
+
+        if request.method == "POST":
+            name = request.form.get("name", "").strip()
+            sku = request.form.get("sku", "").strip()
+            price = request.form.get("price", "").strip()
+            stock = request.form.get("stock", "").strip()
+
+            errors = []
+            if not name:
+                errors.append("El nombre es obligatorio.")
+            try:
+                price_value = float(price) if price else 0.0
+                if price_value < 0:
+                    errors.append("El precio debe ser positivo.")
+            except ValueError:
+                errors.append("El precio debe ser numérico.")
+            try:
+                stock_value = int(stock) if stock else 0
+                if stock_value < 0:
+                    errors.append("El stock no puede ser negativo.")
+            except ValueError:
+                errors.append("El stock debe ser un número entero.")
+
+            if errors:
+                for e in errors:
+                    flash(e, "error")
+                return render_template("products_form.html", action="Crear", product={"name": name, "sku": sku, "price": price, "stock": stock})
+
+            new_prod = {"id": str(uuid4()), "name": name, "sku": sku, "price": price_value, "stock": stock_value}
+            products = get_products()
+            products.append(new_prod)
+            persist_products(products)
+            flash("Producto agregado.", "success")
+            return redirect(url_for("products_list"))
+
+        return render_template("products_form.html", action="Crear", product=None)
+
+    @app.route("/inventario/<product_id>/editar", methods=["GET", "POST"])
+    def product_edit(product_id: str):
+        if not require_login():
+            return redirect(url_for("login"))
+
+        products = get_products()
+        prod = next((p for p in products if p.get("id") == product_id), None)
+        if not prod:
+            abort(404, description="Producto no encontrado")
+
+        if request.method == "POST":
+            name = request.form.get("name", "").strip()
+            sku = request.form.get("sku", "").strip()
+            price = request.form.get("price", "").strip()
+            stock = request.form.get("stock", "").strip()
+
+            errors = []
+            if not name:
+                errors.append("El nombre es obligatorio.")
+            try:
+                price_value = float(price) if price else 0.0
+                if price_value < 0:
+                    errors.append("El precio debe ser positivo.")
+            except ValueError:
+                errors.append("El precio debe ser numérico.")
+            try:
+                stock_value = int(stock) if stock else 0
+                if stock_value < 0:
+                    errors.append("El stock no puede ser negativo.")
+            except ValueError:
+                errors.append("El stock debe ser un número entero.")
+
+            if errors:
+                for e in errors:
+                    flash(e, "error")
+                return render_template("products_form.html", action="Editar", product={"id": product_id, "name": name, "sku": sku, "price": price, "stock": stock})
+
+            prod.update({"name": name, "sku": sku, "price": price_value, "stock": stock_value})
+            persist_products(products)
+            flash("Producto actualizado.", "success")
+            return redirect(url_for("products_list"))
+
+        return render_template("products_form.html", action="Editar", product=prod)
+
+    @app.route("/inventario/<product_id>/eliminar", methods=["POST"])
+    def product_delete(product_id: str):
+        if not require_login():
+            return redirect(url_for("login"))
+        products = get_products()
+        new_products = [p for p in products if p.get("id") != product_id]
+        if len(new_products) == len(products):
+            abort(404, description="Producto no encontrado")
+        persist_products(new_products)
+        flash("Producto eliminado.", "info")
+        return redirect(url_for("products_list"))
 
     return app
 
