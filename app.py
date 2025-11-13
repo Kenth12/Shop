@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import csv
+import io
 from pathlib import Path
 from typing import Any, Dict, List
 from uuid import uuid4
@@ -14,6 +16,7 @@ from flask import (
     request,
     session,
     url_for,
+    Response,
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -118,6 +121,21 @@ def create_app() -> Flask:
         if not require_login():
             return redirect(url_for("login"))
         sales = get_sales()
+        # Normalize customer field: allow older sales where customer is a string
+        for s in sales:
+            cust = s.get("customer")
+            if cust is None:
+                s["customer"] = {"name": "", "email": "", "phone": ""}
+            elif isinstance(cust, str):
+                s["customer"] = {"name": cust, "email": "", "phone": ""}
+            else:
+                # ensure all keys exist
+                s["customer"] = {
+                    "name": cust.get("name", "") if isinstance(cust, dict) else str(cust),
+                    "email": cust.get("email", "") if isinstance(cust, dict) else "",
+                    "phone": cust.get("phone", "") if isinstance(cust, dict) else "",
+                }
+
         return render_template("sales_list.html", sales=sales)
 
     @app.route("/ventas/nueva", methods=["GET", "POST"])
@@ -129,7 +147,10 @@ def create_app() -> Flask:
             product = request.form.get("product", "").strip()
             quantity = request.form.get("quantity", "").strip()
             price = request.form.get("price", "").strip()
-            customer = request.form.get("customer", "").strip()
+            # customer details
+            customer_name = request.form.get("customer_name", "").strip()
+            customer_email = request.form.get("customer_email", "").strip()
+            customer_phone = request.form.get("customer_phone", "").strip()
 
             errors = []
             if not product:
@@ -158,7 +179,7 @@ def create_app() -> Flask:
                         "product": product,
                         "quantity": quantity,
                         "price": price,
-                        "customer": customer,
+                        "customer": {"name": customer_name, "email": customer_email, "phone": customer_phone},
                     },
                 )
 
@@ -167,7 +188,7 @@ def create_app() -> Flask:
                 "product": product,
                 "quantity": quantity_value,
                 "price": price_value,
-                "customer": customer,
+                "customer": {"name": customer_name, "email": customer_email, "phone": customer_phone},
                 "seller": session.get("display_name"),
             }
             sales = get_sales()
@@ -188,11 +209,26 @@ def create_app() -> Flask:
         if sale is None:
             abort(404, description="Venta no encontrada")
 
+        # Normalize existing sale customer to dict for editing
+        cust = sale.get("customer")
+        if cust is None:
+            sale["customer"] = {"name": "", "email": "", "phone": ""}
+        elif isinstance(cust, str):
+            sale["customer"] = {"name": cust, "email": "", "phone": ""}
+        else:
+            sale["customer"] = {
+                "name": cust.get("name", "") if isinstance(cust, dict) else str(cust),
+                "email": cust.get("email", "") if isinstance(cust, dict) else "",
+                "phone": cust.get("phone", "") if isinstance(cust, dict) else "",
+            }
+
         if request.method == "POST":
             product = request.form.get("product", "").strip()
             quantity = request.form.get("quantity", "").strip()
             price = request.form.get("price", "").strip()
-            customer = request.form.get("customer", "").strip()
+            customer_name = request.form.get("customer_name", "").strip()
+            customer_email = request.form.get("customer_email", "").strip()
+            customer_phone = request.form.get("customer_phone", "").strip()
 
             errors = []
             if not product:
@@ -222,7 +258,7 @@ def create_app() -> Flask:
                         "product": product,
                         "quantity": quantity,
                         "price": price,
-                        "customer": customer,
+                        "customer": {"name": customer_name, "email": customer_email, "phone": customer_phone},
                     },
                 )
 
@@ -231,7 +267,7 @@ def create_app() -> Flask:
                     "product": product,
                     "quantity": quantity_value,
                     "price": price_value,
-                    "customer": customer,
+                    "customer": {"name": customer_name, "email": customer_email, "phone": customer_phone},
                 }
             )
             persist_sales(sales)
@@ -253,6 +289,69 @@ def create_app() -> Flask:
         persist_sales(new_sales)
         flash("Venta eliminada.", "info")
         return redirect(url_for("sales_list"))
+
+    @app.route("/ventas/reporte")
+    def sales_report():
+        """Genera un CSV con todas las ventas y lo devuelve como descarga."""
+        if not require_login():
+            return redirect(url_for("login"))
+
+        sales = get_sales()
+
+        # Normalize customer info
+        for s in sales:
+            cust = s.get("customer")
+            if cust is None:
+                s["customer"] = {"name": "", "email": "", "phone": ""}
+            elif isinstance(cust, str):
+                s["customer"] = {"name": cust, "email": "", "phone": ""}
+            else:
+                s["customer"] = {
+                    "name": cust.get("name", "") if isinstance(cust, dict) else str(cust),
+                    "email": cust.get("email", "") if isinstance(cust, dict) else "",
+                    "phone": cust.get("phone", "") if isinstance(cust, dict) else "",
+                }
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        # Header
+        writer.writerow([
+            "id",
+            "product",
+            "quantity",
+            "price",
+            "seller",
+            "customer_name",
+            "customer_email",
+            "customer_phone",
+            "total",
+        ])
+
+        for s in sales:
+            cust = s.get("customer", {}) or {}
+            qty = s.get("quantity", 0)
+            price = s.get("price", 0)
+            total = qty * price if isinstance(qty, (int, float)) and isinstance(price, (int, float)) else ""
+            writer.writerow(
+                [
+                    s.get("id", ""),
+                    s.get("product", ""),
+                    qty,
+                    price,
+                    s.get("seller", ""),
+                    cust.get("name", ""),
+                    cust.get("email", ""),
+                    cust.get("phone", ""),
+                    total,
+                ]
+            )
+
+        csv_data = output.getvalue()
+        output.close()
+
+        resp = Response(csv_data, mimetype="text/csv")
+        resp.headers["Content-Disposition"] = "attachment; filename=reporte_ventas.csv"
+        return resp
 
     return app
 

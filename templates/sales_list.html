@@ -6,15 +6,19 @@
 <section class="card">
   <div class="header-row">
     <h2>Ventas registradas</h2>
-    <a class="button" href="{{ url_for('sales_create') }}">Nueva venta</a>
+    <div>
+      <a class="button primary" href="{{ url_for('sales_create') }}">Nueva venta</a>
+      <a class="button secondary" href="{{ url_for('sales_report') }}">Descargar reporte</a>
+    </div>
   </div>
 
   {% if sales %}
+  <div class="table-responsive">
   <table>
     <thead>
       <tr>
         <th>Producto</th>
-        <th>Cliente</th>
+  <th>Cliente</th>
         <th>Cantidad</th>
         <th>Precio</th>
         <th>Vendedor</th>
@@ -25,7 +29,16 @@
       {% for sale in sales %}
       <tr>
         <td>{{ sale.product }}</td>
-        <td>{{ sale.customer or "N/A" }}</td>
+        <td>
+          {% if sale.customer %}
+            {{ sale.customer.name or 'N/A' }}
+            {% if sale.customer.email or sale.customer.phone %}
+            <div class="muted small">{{ sale.customer.email }} {{ sale.customer.phone }}</div>
+            {% endif %}
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
         <td>{{ sale.quantity }}</td>
         <td>${{ "%.2f"|format(sale.price) }}</td>
         <td>{{ sale.seller or "N/A" }}</td>
@@ -39,6 +52,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% else %}
   <p>No hay ventas registradas.</p>
   {% endif %}

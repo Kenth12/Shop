@@ -5,7 +5,7 @@
 {% block content %}
 <section class="card">
   <h2>{{ action }} venta</h2>
-  <form method="post">
+  <form method="post" class="form-grid">
     <label for="product">Producto</label>
     <input
       type="text"
@@ -15,13 +15,33 @@
       required
     />
 
-    <label for="customer">Cliente</label>
-    <input
-      type="text"
-      id="customer"
-      name="customer"
-      value="{{ sale.customer if sale else '' }}"
-    />
+    <fieldset class="full">
+      <legend>Información del cliente</legend>
+
+      <label for="customer_name">Nombre</label>
+      <input
+        type="text"
+        id="customer_name"
+        name="customer_name"
+        value="{{ sale.customer.name if sale and sale.customer else '' }}"
+      />
+
+      <label for="customer_email">Email</label>
+      <input
+        type="email"
+        id="customer_email"
+        name="customer_email"
+        value="{{ sale.customer.email if sale and sale.customer else '' }}"
+      />
+
+      <label for="customer_phone">Teléfono</label>
+      <input
+        type="tel"
+        id="customer_phone"
+        name="customer_phone"
+        value="{{ sale.customer.phone if sale and sale.customer else '' }}"
+      />
+    </fieldset>
 
     <label for="quantity">Cantidad</label>
     <input
@@ -44,9 +64,9 @@
       required
     />
 
-    <div class="actions">
-      <a class="button secondary" href="{{ url_for('sales_list') }}">Cancelar</a>
-      <button class="button" type="submit">{{ action }}</button>
+    <div class="actions full">
+      <a class="button ghost" href="{{ url_for('sales_list') }}">Cancelar</a>
+      <button class="button primary" type="submit">{{ action }}</button>
     </div>
   </form>
 </section>

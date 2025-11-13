@@ -15,6 +15,18 @@
       "price": 10000000.0,
       "customer": "Nike",
       "seller": "Administrador"
+    },
+    {
+      "id": "f4d0e66c-1e21-495e-8afd-3dc053f0a5e5",
+      "product": "carro",
+      "quantity": 1,
+      "price": 4343.0,
+      "customer": {
+        "name": "javier",
+        "email": "javier@12.com",
+        "phone": "123123"
+      },
+      "seller": "Administrador"
     }
   ]
 }

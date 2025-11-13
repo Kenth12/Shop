@@ -8,18 +8,23 @@
   </head>
   <body>
     <header>
-      <h1>Tienda de Ropa</h1>
-      <nav>
-        {% if session.get('username') %}
-        <span>Sesión: {{ session.get('display_name') }}</span>
-        <a href="{{ url_for('sales_list') }}">Ventas</a>
-        <form class="inline" method="get" action="{{ url_for('logout') }}">
-          <button type="submit">Salir</button>
-        </form>
-        {% endif %}
-      </nav>
+      <div class="container">
+        <div class="bar">
+          <h1>Tienda de Ropa</h1>
+          <nav>
+            {% if session.get('username') %}
+            <span>Sesión: {{ session.get('display_name') }}</span>
+            <a class="button ghost" href="{{ url_for('sales_list') }}">Ventas</a>
+            <form class="inline" method="get" action="{{ url_for('logout') }}">
+              <button class="button small" type="submit">Salir</button>
+            </form>
+            {% endif %}
+          </nav>
+        </div>
+      </div>
     </header>
     <main>
+      <div class="container">
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
       <ul class="flash-messages">
@@ -31,9 +36,12 @@
       {% endwith %}
 
       {% block content %}{% endblock %}
+      </div>
     </main>
     <footer>
-      <p>© {{ 2025 }} Tienda de Ropa</p>
+      <div class="container">
+        <p>© {{ 2025 }} Tienda de Ropa</p>
+      </div>
     </footer>
   </body>
 </html>
