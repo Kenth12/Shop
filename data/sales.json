@@ -1,3 +1,20 @@
 {
-  "sales": []
+  "sales": [
+    {
+      "id": "248560e3-e1f9-47f1-a774-ed0dc61b9844",
+      "product": "carro",
+      "quantity": 1,
+      "price": 324.0,
+      "customer": "123",
+      "seller": "Administrador"
+    },
+    {
+      "id": "ac95edcb-ba64-4f04-81a1-356e67bcd99f",
+      "product": "Ropa",
+      "quantity": 1,
+      "price": 10000000.0,
+      "customer": "Nike",
+      "seller": "Administrador"
+    }
+  ]
 }
