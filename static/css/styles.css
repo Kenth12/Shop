@@ -116,6 +116,24 @@ td{ vertical-align:middle }
   .card{ padding:1.25rem }
 }
 
+/* Form niceties for mobile and improved layout */
+.form-grid label{ display:block; margin-bottom:0.25rem }
+.form-grid input, .form-grid select, .form-grid textarea{ width:100% }
+.two-cols{ display:flex; gap:0.5rem; align-items:center }
+.two-cols .col{ flex:1 }
+.two-cols .col input{ width:100% }
+
+/* Actions: make buttons stack on small screens */
+.actions.full{ display:flex; gap:0.5rem; justify-content:flex-end }
+
+@media (max-width:699px){
+  .form-grid{ grid-template-columns: 1fr }
+  .two-cols{ flex-direction:column; align-items:stretch }
+  .actions.full{ flex-direction:column; width:100% }
+  .actions.full .button, .actions.full button{ width:100% }
+  .card h2{ margin-top:0; margin-bottom:0.5rem }
+}
+
 @media (max-width:699px){
   header .bar{ flex-direction:column; align-items:flex-start; gap:0.5rem }
   nav{ gap:0.5rem }
