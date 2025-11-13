@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Tienda de Ropa{% endblock %}</title>
+    <title>{% block title %}Tienda Online{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
   </head>
   <body>
     <header>
       <div class="container">
         <div class="bar">
-          <h1>Tienda de Ropa</h1>
+          <h1>Tienda Online</h1>
 
           <!-- Mobile toggle button -->
           <button class="nav-toggle" aria-expanded="false" aria-label="Abrir menú" type="button">☰</button>
@@ -19,12 +19,17 @@
           <div class="nav-container" id="main-nav">
             <nav>
               {% if session.get('username') %}
-              <span class="nav-user">Sesión: {{ session.get('display_name') }}</span>
-              <a class="button ghost" href="{{ url_for('sales_list') }}">Ventas</a>
-              <a class="button ghost" href="{{ url_for('products_list') }}">Inventario</a>
-              <form class="inline" method="get" action="{{ url_for('logout') }}">
-                <button class="button small" type="submit">Salir</button>
-              </form>
+                <span class="nav-user">Sesión: {{ session.get('display_name') }}</span>
+                {% if session.get('username') == 'admin' %}
+                  <a class="button ghost" href="{{ url_for('sales_list') }}">Ventas</a>
+                  <a class="button ghost" href="{{ url_for('products_list') }}">Inventario</a>
+                {% else %}
+                  <a class="button ghost" href="{{ url_for('products_list') }}">Tienda</a>
+                  <a class="button ghost" href="{{ url_for('cart_view') }}">Carrito</a>
+                {% endif %}
+                <form class="inline" method="get" action="{{ url_for('logout') }}">
+                  <button class="button small" type="submit">Salir</button>
+                </form>
               {% endif %}
             </nav>
           </div>
@@ -49,7 +54,7 @@
 
     <footer>
       <div class="container">
-        <p>© {{ 2025 }} Tienda de Ropa</p>
+        <p>© {{ 2025 }} Tienda Online</p>
       </div>
     </footer>
 

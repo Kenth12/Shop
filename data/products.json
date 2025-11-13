@@ -5,14 +5,14 @@
       "name": "Silla",
       "sku": "asdasdasd",
       "price": 10.0,
-      "stock": 4
+      "stock": 1
     },
     {
       "id": "a82ba2ca-1db5-438e-860a-7e9151415b64",
       "name": "Mesa",
       "sku": "7895745",
       "price": 30.0,
-      "stock": 20
+      "stock": 14
     }
   ]
 }

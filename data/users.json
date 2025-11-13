@@ -4,7 +4,13 @@
       "username": "admin",
       "password": "admin123",
       "name": "Administrador"
+    },
+    {
+      "username": "javier",
+      "password": "javier",
+      "name": "javier",
+      "email": "javier@javier.com",
+      "phone": "123123123"
     }
   ]
 }
-

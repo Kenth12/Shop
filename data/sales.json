@@ -40,6 +40,84 @@
         "phone": "3234"
       },
       "seller": "Administrador"
+    },
+    {
+      "id": "8246f0e7-34d7-4561-81fc-6f2bd3f57605",
+      "product": "Silla",
+      "product_id": "0daae9c1-43cc-4879-be63-7c8e25e68504",
+      "quantity": 1,
+      "price": 10.0,
+      "customer": {
+        "name": "javier",
+        "email": "",
+        "phone": ""
+      },
+      "seller": "javier"
+    },
+    {
+      "id": "5d2531bf-6d51-454d-9c5c-f48dc60ca610",
+      "product": "Mesa",
+      "product_id": "a82ba2ca-1db5-438e-860a-7e9151415b64",
+      "quantity": 2,
+      "price": 30.0,
+      "customer": {
+        "name": "javier",
+        "email": "",
+        "phone": ""
+      },
+      "seller": "javier"
+    },
+    {
+      "id": "a0684bce-2f77-4c28-8a51-e13a49e76c84",
+      "product": "Mesa",
+      "product_id": "a82ba2ca-1db5-438e-860a-7e9151415b64",
+      "quantity": 2,
+      "price": 30.0,
+      "customer": {
+        "name": "javier",
+        "email": "",
+        "phone": ""
+      },
+      "seller": "javier"
+    },
+    {
+      "id": "5c949efa-e339-4332-b06d-116ad1b7b5e7",
+      "product": "Silla",
+      "product_id": "0daae9c1-43cc-4879-be63-7c8e25e68504",
+      "quantity": 1,
+      "price": 10.0,
+      "customer": {
+        "name": "javier",
+        "email": "",
+        "phone": ""
+      },
+      "seller": "javier"
+    },
+    {
+      "id": "f4f557ea-bc4a-45cc-99eb-5b462b3aab56",
+      "product": "Mesa",
+      "product_id": "a82ba2ca-1db5-438e-860a-7e9151415b64",
+      "quantity": 2,
+      "price": 30.0,
+      "customer": {
+        "name": "javier",
+        "email": "javier@javier.com",
+        "phone": "123123123"
+      },
+      "seller": "javier"
+    },
+    {
+      "id": "3a552e55-e442-472f-96cd-7ff1a91f5fa0",
+      "product": "Silla",
+      "product_id": "0daae9c1-43cc-4879-be63-7c8e25e68504",
+      "quantity": 1,
+      "price": 10.0,
+      "customer": {
+        "name": "javier",
+        "email": "javier@javier.com",
+        "phone": "123123123"
+      },
+      "seller": "javier"
     }
   ]
 }

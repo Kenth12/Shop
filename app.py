@@ -11,6 +11,7 @@ from flask import (
     Flask,
     abort,
     flash,
+    make_response,
     redirect,
     render_template,
     request,
@@ -73,6 +74,11 @@ def require_login() -> bool:
     return bool(session.get("username"))
 
 
+def is_admin() -> bool:
+    """Consider 'admin' username as administrator."""
+    return session.get("username") == "admin"
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config["SECRET_KEY"] = "change-this-secret-key"
@@ -100,7 +106,10 @@ def create_app() -> Flask:
     @app.route("/")
     def index():
         if require_login():
-            return redirect(url_for("sales_list"))
+            # send admins to sales, regular users to products (tienda)
+            if session.get("username") == "admin":
+                return redirect(url_for("sales_list"))
+            return redirect(url_for("products_list"))
         return redirect(url_for("login"))
 
     @app.route("/login", methods=["GET", "POST"])
@@ -113,8 +122,14 @@ def create_app() -> Flask:
             if user and user.get("password") == password:
                 session["username"] = user["username"]
                 session["display_name"] = user.get("name", user["username"])
+                # store contact info in session when available
+                session["email"] = user.get("email", "")
+                session["phone"] = user.get("phone", "")
                 flash(f"Bienvenido, {session['display_name']}!", "success")
-                return redirect(url_for("sales_list"))
+                # redirect admin to sales, regular users to products
+                if session.get("username") == "admin":
+                    return redirect(url_for("sales_list"))
+                return redirect(url_for("products_list"))
 
             flash("Usuario o contraseña incorrectos.", "error")
 
@@ -128,10 +143,171 @@ def create_app() -> Flask:
         flash("Has cerrado sesión.", "info")
         return redirect(url_for("login"))
 
+    # ----- Cart helpers (stored in cookies) -----
+    def _get_cart() -> List[Dict[str, Any]]:
+        raw = request.cookies.get("cart")
+        if not raw:
+            return []
+        try:
+            data = json.loads(raw)
+            if isinstance(data, list):
+                return data
+        except Exception:
+            return []
+        return []
+
+    def _set_cart(response, cart: List[Dict[str, Any]]) -> None:
+        try:
+            response.set_cookie("cart", json.dumps(cart), max_age=60 * 60 * 24 * 30)
+        except Exception:
+            # if cookie too large or other error, ignore silently
+            pass
+
+    # ----- User registration (buyer) -----
+    @app.route("/register", methods=["GET", "POST"])
+    def register():
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "")
+            name = request.form.get("name", "").strip()
+            email = request.form.get("email", "").strip()
+            phone = request.form.get("phone", "").strip()
+            if not username or not password:
+                flash("Usuario y contraseña son requeridos.", "error")
+                return render_template("register.html")
+            # check existing
+            if find_user(username):
+                flash("El usuario ya existe.", "error")
+                return render_template("register.html")
+            users = get_users()
+            users.append({"username": username, "password": password, "name": name, "email": email, "phone": phone})
+            save_json(USERS_FILE, {"users": users})
+            flash("Usuario registrado. Puedes iniciar sesión.", "success")
+            return redirect(url_for("login"))
+        return render_template("register.html")
+
+    # ----- Cart routes -----
+    @app.route("/carrito")
+    def cart_view():
+        # only non-admin users (buyers) can use cart
+        if not require_login():
+            flash("Debes iniciar sesión para ver el carrito.", "error")
+            return redirect(url_for("login"))
+        if is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
+        cart = _get_cart()
+        return render_template("cart.html", cart=cart)
+
+    @app.route("/carrito/agregar", methods=["POST"])
+    def cart_add():
+        # only buyers can add to cart
+        if not require_login():
+            flash("Debes iniciar sesión para agregar al carrito.", "error")
+            return redirect(url_for("login"))
+        if is_admin():
+            flash("Los administradores no pueden usar el carrito.", "error")
+            return redirect(url_for("products_list"))
+
+        product_id = request.form.get("product_id", "").strip()
+        qty = request.form.get("quantity", "1").strip()
+        try:
+            qty_value = int(qty)
+            if qty_value < 1:
+                qty_value = 1
+        except Exception:
+            qty_value = 1
+        prod = next((p for p in get_products() if p.get("id") == product_id), None)
+        if not prod:
+            flash("Producto no encontrado.", "error")
+            return redirect(url_for("products_list"))
+        cart = _get_cart()
+        # if exists, increment
+        existing = next((c for c in cart if c.get("product_id") == product_id), None)
+        if existing:
+            existing["quantity"] = existing.get("quantity", 0) + qty_value
+        else:
+            cart.append({
+                "product_id": product_id,
+                "name": prod.get("name"),
+                "price": prod.get("price", 0),
+                "quantity": qty_value,
+            })
+        resp = make_response(redirect(url_for("cart_view")))
+        _set_cart(resp, cart)
+        flash("Producto agregado al carrito.", "success")
+        return resp
+
+    @app.route("/carrito/remover", methods=["POST"])
+    def cart_remove():
+        if not require_login():
+            flash("Debes iniciar sesión.", "error")
+            return redirect(url_for("login"))
+        if is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
+        product_id = request.form.get("product_id", "").strip()
+        cart = _get_cart()
+        new_cart = [c for c in cart if c.get("product_id") != product_id]
+        resp = make_response(redirect(url_for("cart_view")))
+        _set_cart(resp, new_cart)
+        flash("Artículo eliminado.", "info")
+        return resp
+
+    @app.route("/carrito/checkout", methods=["POST"])
+    def cart_checkout():
+        if not require_login():
+            flash("Debes iniciar sesión para pagar.", "error")
+            return redirect(url_for("login"))
+        if is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
+        # assume current user is buyer
+        cart = _get_cart()
+        if not cart:
+            flash("El carrito está vacío.", "error")
+            return redirect(url_for("cart_view"))
+        sales = get_sales()
+        for item in cart:
+            try:
+                quantity = int(item.get("quantity", 0))
+                price = float(item.get("price", 0))
+            except Exception:
+                continue
+            sale = {
+                "id": str(uuid4()),
+                "product": item.get("name"),
+                "product_id": item.get("product_id"),
+                "quantity": quantity,
+                "price": price,
+                "customer": {"name": session.get("display_name"), "email": session.get("email", ""), "phone": session.get("phone", "")},
+                "seller": session.get("display_name"),
+            }
+            sales.append(sale)
+            # decrement stock if product exists
+            products = get_products()
+            prod = next((p for p in products if p.get("id") == item.get("product_id")), None)
+            if prod and isinstance(prod.get("stock"), int):
+                try:
+                    prod_stock = int(prod.get("stock", 0))
+                    prod["stock"] = max(0, prod_stock - quantity)
+                except Exception:
+                    pass
+            persist_products(products)
+        persist_sales(sales)
+        # after checkout redirect buyers to the tienda
+        resp = make_response(redirect(url_for("products_list")))
+        # clear cart
+        _set_cart(resp, [])
+        flash("Compra realizada correctamente.", "success")
+        return resp
+
     @app.route("/ventas")
     def sales_list():
-        if not require_login():
-            return redirect(url_for("login"))
+        # only admin can view sales list
+        if not require_login() or not is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
         sales = get_sales()
         # Normalize customer field: allow older sales where customer is a string
         for s in sales:
@@ -152,8 +328,10 @@ def create_app() -> Flask:
 
     @app.route("/ventas/nueva", methods=["GET", "POST"])
     def sales_create():
-        if not require_login():
-            return redirect(url_for("login"))
+        # only admin can create manual sales
+        if not require_login() or not is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
 
         products = get_products()
 
@@ -241,8 +419,9 @@ def create_app() -> Flask:
 
     @app.route("/ventas/<sale_id>/editar", methods=["GET", "POST"])
     def sales_edit(sale_id: str):
-        if not require_login():
-            return redirect(url_for("login"))
+        if not require_login() or not is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
 
         sales = get_sales()
         sale = next((item for item in sales if item["id"] == sale_id), None)
@@ -332,8 +511,9 @@ def create_app() -> Flask:
 
     @app.route("/ventas/<sale_id>/eliminar", methods=["POST"])
     def sales_delete(sale_id: str):
-        if not require_login():
-            return redirect(url_for("login"))
+        if not require_login() or not is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
 
         sales = get_sales()
         new_sales = [sale for sale in sales if sale["id"] != sale_id]
@@ -347,8 +527,9 @@ def create_app() -> Flask:
     @app.route("/ventas/reporte")
     def sales_report():
         """Genera un CSV con todas las ventas y el inventario y lo devuelve como descarga."""
-        if not require_login():
-            return redirect(url_for("login"))
+        if not require_login() or not is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
 
         sales = get_sales()
 
@@ -366,10 +547,19 @@ def create_app() -> Flask:
                     "phone": cust.get("phone", "") if isinstance(cust, dict) else "",
                 }
 
-        output = io.StringIO()
-        writer = csv.writer(output)
-        # Sales header
-        writer.writerow([
+        # Produce an Excel (.xlsx) file with two sheets: Sales and Inventory.
+        # openpyxl is required. If missing, inform the admin and redirect back.
+        try:
+            from openpyxl import Workbook
+        except Exception:
+            flash("No se puede generar el reporte: falta la librería 'openpyxl'. Instala con: pip install openpyxl", "error")
+            return redirect(url_for("sales_list"))
+
+        wb = Workbook()
+        ws_sales = wb.active
+        ws_sales.title = "Sales"
+
+        sales_header = [
             "id",
             "product",
             "quantity",
@@ -379,35 +569,33 @@ def create_app() -> Flask:
             "customer_email",
             "customer_phone",
             "total",
-        ])
+        ]
+        ws_sales.append(sales_header)
 
         for s in sales:
             cust = s.get("customer", {}) or {}
             qty = s.get("quantity", 0)
             price = s.get("price", 0)
             total = qty * price if isinstance(qty, (int, float)) and isinstance(price, (int, float)) else ""
-            writer.writerow(
-                [
-                    s.get("id", ""),
-                    s.get("product", ""),
-                    qty,
-                    price,
-                    s.get("seller", ""),
-                    cust.get("name", ""),
-                    cust.get("email", ""),
-                    cust.get("phone", ""),
-                    total,
-                ]
-            )
+            ws_sales.append([
+                s.get("id", ""),
+                s.get("product", ""),
+                qty,
+                price,
+                s.get("seller", ""),
+                cust.get("name", ""),
+                cust.get("email", ""),
+                cust.get("phone", ""),
+                total,
+            ])
 
-        # Separator row
-        writer.writerow([])
-
-        # Inventory section
+        # Inventory sheet
+        ws_inv = wb.create_sheet(title="Inventory")
+        inv_header = ["inventory_id", "name", "sku", "price", "stock"]
+        ws_inv.append(inv_header)
         products = get_products()
-        writer.writerow(["inventory_id", "name", "sku", "price", "stock"])
         for p in products:
-            writer.writerow([
+            ws_inv.append([
                 p.get("id", ""),
                 p.get("name", ""),
                 p.get("sku", ""),
@@ -415,16 +603,17 @@ def create_app() -> Flask:
                 p.get("stock", ""),
             ])
 
-        csv_data = output.getvalue()
-        output.close()
-
-        resp = Response(csv_data, mimetype="text/csv")
-        resp.headers["Content-Disposition"] = "attachment; filename=reporte_ventas_e_inventario.csv"
+        bio = io.BytesIO()
+        wb.save(bio)
+        bio.seek(0)
+        resp = Response(bio.getvalue(), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        resp.headers["Content-Disposition"] = "attachment; filename=reporte_ventas_e_inventario.xlsx"
         return resp
 
     # --- Inventory (products) CRUD ---
     @app.route("/inventario")
     def products_list():
+        # allow both admin and users to view products; render differs in template
         if not require_login():
             return redirect(url_for("login"))
         products = get_products()
@@ -432,14 +621,17 @@ def create_app() -> Flask:
 
     @app.route("/inventario/nuevo", methods=["GET", "POST"])
     def product_create():
-        if not require_login():
-            return redirect(url_for("login"))
+        # only admin can create products
+        if not require_login() or not is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
 
         if request.method == "POST":
             name = request.form.get("name", "").strip()
             sku = request.form.get("sku", "").strip()
             price = request.form.get("price", "").strip()
             stock = request.form.get("stock", "").strip()
+            image_base64 = request.form.get("image_base64", "").strip()
 
             errors = []
             if not name:
@@ -462,7 +654,7 @@ def create_app() -> Flask:
                     flash(e, "error")
                 return render_template("products_form.html", action="Crear", product={"name": name, "sku": sku, "price": price, "stock": stock})
 
-            new_prod = {"id": str(uuid4()), "name": name, "sku": sku, "price": price_value, "stock": stock_value}
+            new_prod = {"id": str(uuid4()), "name": name, "sku": sku, "price": price_value, "stock": stock_value, "image_base64": image_base64}
             products = get_products()
             products.append(new_prod)
             persist_products(products)
@@ -473,8 +665,9 @@ def create_app() -> Flask:
 
     @app.route("/inventario/<product_id>/editar", methods=["GET", "POST"])
     def product_edit(product_id: str):
-        if not require_login():
-            return redirect(url_for("login"))
+        if not require_login() or not is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
 
         products = get_products()
         prod = next((p for p in products if p.get("id") == product_id), None)
@@ -486,6 +679,7 @@ def create_app() -> Flask:
             sku = request.form.get("sku", "").strip()
             price = request.form.get("price", "").strip()
             stock = request.form.get("stock", "").strip()
+            image_base64 = request.form.get("image_base64", "").strip()
 
             errors = []
             if not name:
@@ -508,7 +702,7 @@ def create_app() -> Flask:
                     flash(e, "error")
                 return render_template("products_form.html", action="Editar", product={"id": product_id, "name": name, "sku": sku, "price": price, "stock": stock})
 
-            prod.update({"name": name, "sku": sku, "price": price_value, "stock": stock_value})
+            prod.update({"name": name, "sku": sku, "price": price_value, "stock": stock_value, "image_base64": image_base64})
             persist_products(products)
             flash("Producto actualizado.", "success")
             return redirect(url_for("products_list"))
@@ -517,8 +711,9 @@ def create_app() -> Flask:
 
     @app.route("/inventario/<product_id>/eliminar", methods=["POST"])
     def product_delete(product_id: str):
-        if not require_login():
-            return redirect(url_for("login"))
+        if not require_login() or not is_admin():
+            flash("Acceso denegado.", "error")
+            return redirect(url_for("products_list"))
         products = get_products()
         new_products = [p for p in products if p.get("id") != product_id]
         if len(new_products) == len(products):
