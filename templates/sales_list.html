@@ -28,10 +28,10 @@
     <tbody>
       {% for sale in sales %}
       <tr>
-        <td>{{ sale.product }}</td>
-        <td>
+        <td data-label="Producto">{{ sale.product }}</td>
+        <td data-label="Cliente">
           {% if sale.customer %}
-            {{ sale.customer.name or 'N/A' }}
+            <div>{{ sale.customer.name or 'N/A' }}</div>
             {% if sale.customer.email or sale.customer.phone %}
             <div class="muted small">{{ sale.customer.email }} {{ sale.customer.phone }}</div>
             {% endif %}
@@ -39,12 +39,12 @@
             N/A
           {% endif %}
         </td>
-        <td>{{ sale.quantity }}</td>
-        <td>${{ "%.2f"|format(sale.price) }}</td>
-        <td>{{ sale.seller or "N/A" }}</td>
-        <td>
+        <td data-label="Cantidad">{{ sale.quantity }}</td>
+        <td data-label="Precio">${{ "%.2f"|format(sale.price) }}</td>
+        <td data-label="Vendedor">{{ sale.seller or "N/A" }}</td>
+        <td data-label="Acciones">
           <a class="button small" href="{{ url_for('sales_edit', sale_id=sale.id) }}">Editar</a>
-          <form method="post" action="{{ url_for('sales_delete', sale_id=sale.id) }}" onsubmit="return confirm('¿Eliminar esta venta?');">
+          <form method="post" action="{{ url_for('sales_delete', sale_id=sale.id) }}" onsubmit="return confirm('¿Eliminar esta venta?');" style="display:inline;">
             <button class="button danger small" type="submit">Eliminar</button>
           </form>
         </td>

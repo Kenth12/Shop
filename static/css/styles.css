@@ -42,6 +42,14 @@ header h1{ margin:0; font-size:1.125rem; }
 nav{ display:flex; gap:0.75rem; align-items:center; }
 nav a, nav span{ color: #e6eefc; }
 
+/* Mobile nav toggle button (hidden on desktop) */
+.nav-toggle{ display:none; background:transparent; border:1px solid rgba(255,255,255,0.08); color: #e6eefc; padding:0.5rem 0.75rem; border-radius:8px; font-size:1.1rem; cursor:pointer }
+.nav-toggle:focus{ outline:none; box-shadow:0 0 0 4px rgba(255,255,255,0.06) }
+
+/* Nav container: on desktop behaves normally; on mobile it will be collapsed and toggled */
+.nav-container{ display:block }
+.nav-container nav{ display:flex; gap:0.75rem; align-items:center; }
+
 main{ padding: 1rem 0; }
 footer{ text-align:center; padding:1rem 0; color:var(--muted); }
 
@@ -114,6 +122,35 @@ td{ vertical-align:middle }
   .header-row{ flex-direction:column; align-items:flex-start }
   .actions{ width:100%; justify-content:space-between }
   table{ min-width:600px }
+}
+
+/* Responsive behavior for the mobile nav */
+@media (max-width:699px){
+  .nav-toggle{ display:inline-block; margin-left:auto }
+  /* hide nav by default on small screens; show when .open present */
+  .nav-container{ display:none; width:100%; order:2 }
+  .nav-container.open{ display:block }
+  .nav-container nav{ flex-direction:column; gap:0.5rem; align-items:flex-start; margin-top:0.5rem }
+  .nav-user{ color:var(--muted); font-weight:700; }
+  /* Keep title and toggle on same row, menu drops below when opened */
+  header .bar{ flex-direction:row; align-items:center; flex-wrap:wrap }
+  header h1{ order:0 }
+  .nav-toggle{ order:1 }
+  .nav-container{ order:3 }
+  /* Convert tables to card-like stacks on small screens */
+  .table-responsive table{ border:0 }
+  .table-responsive thead{ display:none }
+  .table-responsive, .table-responsive tbody, .table-responsive tr, .table-responsive td{ display:block; width:100% }
+  .table-responsive tr{ background:var(--surface); border-radius:8px; padding:0.75rem; margin-bottom:0.75rem; box-shadow:0 8px 20px rgba(15,23,42,0.04) }
+  .table-responsive td{ display:flex; justify-content:space-between; padding:0.35rem 0; border-bottom:0 }
+  .table-responsive td::before{ content: attr(data-label); color:var(--muted); font-weight:700; margin-right:0.75rem }
+  .table-responsive td .muted{ display:block; margin-top:0.25rem }
+  /* Ensure action buttons wrap nicely */
+  .table-responsive td .button{ white-space:nowrap }
+  /* Make tables adapt better on very small screens: allow narrower widths */
+  table{ min-width:0 }
+  /* Ensure action buttons stretch a bit less on tiny screens */
+  .actions{ flex-direction:row; gap:0.5rem }
 }
 
 /* Utilities */

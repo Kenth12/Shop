@@ -11,16 +11,23 @@
       <div class="container">
         <div class="bar">
           <h1>Tienda de Ropa</h1>
-          <nav>
-            {% if session.get('username') %}
-            <span>Sesión: {{ session.get('display_name') }}</span>
-            <a class="button ghost" href="{{ url_for('sales_list') }}">Ventas</a>
-            <a class="button ghost" href="{{ url_for('products_list') }}">Inventario</a>
-            <form class="inline" method="get" action="{{ url_for('logout') }}">
-              <button class="button small" type="submit">Salir</button>
-            </form>
-            {% endif %}
-          </nav>
+
+          <!-- Mobile toggle button -->
+          <button class="nav-toggle" aria-expanded="false" aria-label="Abrir menú" type="button">☰</button>
+
+          <!-- Nav container: stays visible on desktop, collapsible on mobile -->
+          <div class="nav-container" id="main-nav">
+            <nav>
+              {% if session.get('username') %}
+              <span class="nav-user">Sesión: {{ session.get('display_name') }}</span>
+              <a class="button ghost" href="{{ url_for('sales_list') }}">Ventas</a>
+              <a class="button ghost" href="{{ url_for('products_list') }}">Inventario</a>
+              <form class="inline" method="get" action="{{ url_for('logout') }}">
+                <button class="button small" type="submit">Salir</button>
+              </form>
+              {% endif %}
+            </nav>
+          </div>
         </div>
       </div>
     </header>
@@ -39,11 +46,35 @@
       {% block content %}{% endblock %}
       </div>
     </main>
+
     <footer>
       <div class="container">
         <p>© {{ 2025 }} Tienda de Ropa</p>
       </div>
     </footer>
+
+    <script>
+      // Simple mobile nav toggle
+      (function(){
+        const toggle = document.querySelector('.nav-toggle');
+        const nav = document.getElementById('main-nav');
+        if(!toggle || !nav) return;
+        toggle.addEventListener('click', function(){
+          const expanded = toggle.getAttribute('aria-expanded') === 'true';
+          toggle.setAttribute('aria-expanded', String(!expanded));
+          nav.classList.toggle('open');
+        });
+
+        // Close nav when clicking outside on mobile
+        document.addEventListener('click', function(e){
+          if(!nav.classList.contains('open')) return;
+          if(e.target === toggle) return;
+          if(nav.contains(e.target)) return;
+          nav.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        });
+      })();
+    </script>
   </body>
 </html>
 

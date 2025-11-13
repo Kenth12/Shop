@@ -27,11 +27,11 @@
     <tbody>
       {% for p in products %}
       <tr>
-        <td>{{ p.name }}</td>
-        <td>{{ p.sku or '-' }}</td>
-        <td>${{ "%.2f"|format(p.price) }}</td>
-        <td>{{ p.stock }}</td>
-        <td>
+        <td data-label="Nombre">{{ p.name }}</td>
+        <td data-label="SKU">{{ p.sku or '-' }}</td>
+        <td data-label="Precio">${{ "%.2f"|format(p.price) }}</td>
+        <td data-label="Stock">{{ p.stock }}</td>
+        <td data-label="Acciones">
           <a class="button small" href="{{ url_for('product_edit', product_id=p.id) }}">Editar</a>
           <form method="post" action="{{ url_for('product_delete', product_id=p.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar este producto?');">
             <button class="button danger small" type="submit">Eliminar</button>
